@@ -33,33 +33,88 @@ pip install camoufox[geoip] playwright httpx
 playwright install firefox
 ```
 
-### 2. Set Up Catch-All Email
+### 2. Set Up Email Forwarding (Catch-All)
 
-You need a **catch-all email domain** so every random email forwards to your inbox. Options:
+The farm creates accounts with random emails like `xK9mN2pQ@yourdomain.com`. You need these emails to **forward to your Gmail** so the farm can read verification codes via IMAP.
 
 **Option A: Cloudflare Email Routing (Recommended — Free)**
+
 1. Add a domain to Cloudflare (or use an existing one)
 2. Go to **Email** → **Email Routing** → **Catch-All Address**
-3. Set action to "Send to an email" (your Gmail)
+3. Set action to **"Send to an email"** → enter your Gmail
 4. Enable catch-all rule
 
-**Option B: Gmail + Alias**
-Create a Gmail filter to catch `{anything}@yourdomain.com`
+Now every email to `*@yourdomain.com` → forwarded to your Gmail. ✅
 
-### 3. Run the Farm
+**Option B: Other providers**
+- **Zoho Mail** — Free plan supports catch-all
+- **ProtonMail** — Paid plan with catch-all
+- **Self-hosted** — Postfix/Dovecot with catch-all
+
+### 3. Set Up Gmail App Password
+
+The farm reads verification emails from your Gmail via IMAP. You need a **Gmail App Password** (not your regular password).
+
+**Step-by-step:**
+
+1. **Enable 2-Factor Authentication**
+   - Go to [myaccount.google.com/security](https://myaccount.google.com/security)
+   - Under "Signing in to Google" → click **2-Step Verification**
+   - Follow the setup (phone number / authenticator app)
+
+2. **Generate App Password**
+   - Go to [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
+   - Select app: **Mail**
+   - Select device: **Other (Custom name)** → type "Farm"
+   - Click **Generate**
+   - Copy the 16-character password: `abcd efgh ijkl mnop`
+
+3. **Save credentials**
+
+   Copy `.env.example` to `.env` and fill in your values:
+   ```bash
+   cp .env.example .env
+   nano .env
+   ```
+
+   ```
+   IMAP_USER=you@gmail.com
+   IMAP_PASS=abcd efgh ijkl mnop
+   EMAIL_DOMAIN=yourdomain.com
+   ```
+
+> ⚠️ **Important:** Use the App Password, NOT your regular Gmail password.
+> Google blocks IMAP login with regular passwords.
+
+### 4. Run the Farm
 
 ```bash
-python farm.py --email your@email.com
+python farm.py
 ```
 
 This will:
-1. Open Alibaba Cloud registration page
-2. Fill in a random email (`{random}@yourdomain.com`)
-3. Verify email via IMAP/Gmail
-4. Complete registration
-5. Save API key to `results.json`
+1. Generate random email: `{random}@yourdomain.com`
+2. Open Alibaba Cloud registration page (headless browser)
+3. Fill in the random email + password
+4. Wait for verification code (polls Gmail via IMAP)
+5. Enter verification code automatically
+6. Complete registration
+7. Save API key to `results.json`
+8. Repeat until you have enough accounts
 
-### 4. Run the Dashboard
+**Options:**
+```bash
+# Farm 5 accounts
+python farm.py --count 5
+
+# Use specific email domain
+EMAIL_DOMAIN=mydomain.com python farm.py
+
+# With proxy (recommended for avoiding Cloudflare)
+HTTP_PROXY=http://user:pass@proxy:port python farm.py
+```
+
+### 5. Run the Dashboard
 
 ```bash
 python dashboard.py --port 8888
@@ -170,17 +225,29 @@ aliases:
 
 ### Environment Variables
 
-```bash
-# Optional: Gmail app password for email verification
-export GMAIL_APP_PASSWORD="your-app-password"
+Copy `.env.example` to `.env` and fill in your values:
 
-# Optional: Proxy for Cloudflare bypass
-export HTTP_PROXY="http://user:pass@proxy:port"
+```bash
+cp .env.example .env
 ```
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `IMAP_USER` | ✅ | Gmail address (e.g. `you@gmail.com`) |
+| `IMAP_PASS` | ✅ | Gmail App Password (16 chars, e.g. `abcd efgh ijkl mnop`) |
+| `EMAIL_DOMAIN` | ✅ | Catch-all domain (e.g. `yourdomain.com`) |
+| `IMAP_HOST` | ❌ | IMAP server (default: `imap.gmail.com`) |
+| `IMAP_PORT` | ❌ | IMAP port (default: `993`) |
+| `MAX_ATTEMPTS` | ❌ | Max accounts per run (default: `20`) |
+| `HTTP_PROXY` | ❌ | Proxy for Cloudflare bypass |
 
 ### Dashboard Options
 
 ```bash
+# Default
+python dashboard.py --port 8888
+
+# Bind to all interfaces (for remote access)
 python dashboard.py --port 8888 --host 0.0.0.0
 ```
 
@@ -190,6 +257,8 @@ python dashboard.py --port 8888 --host 0.0.0.0
 alibaba-cloud-farm/
 ├── farm.py              # Main farming script
 ├── dashboard.py         # Web dashboard
+├── .env.example         # Environment variables template
+├── .env                 # Your credentials (gitignored)
 ├── results.json         # Farmed accounts (auto-generated, gitignored)
 ├── assets/
 │   └── dashboard-preview.png
