@@ -85,7 +85,10 @@ if not IMAP_USER or not IMAP_PASS or not EMAIL_DOMAIN:
 REGISTER_URL = "https://account.alibabacloud.com/register/intl_register.htm"
 
 MAX_ATTEMPTS = int(os.environ.get("MAX_ATTEMPTS", "20"))  # Max registration attempts per run
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 RESULTS_FILE = os.environ.get("RESULTS_FILE", "results.json")
+SCREENSHOT_DIR = os.environ.get("FARM_SCREENSHOT_DIR", os.path.join(BASE_DIR, "screenshots"))
+os.makedirs(SCREENSHOT_DIR, exist_ok=True)
 MODELSTUDIO_URL = "https://modelstudio.console.alibabacloud.com/"
 
 # ── Helpers ──────────────────────────────────────────────────
@@ -435,7 +438,7 @@ def solve_slider(page, mouse):
 
     if not el:
         print("  [SLIDER] No slider found after 30s")
-        safe_screenshot(page, "/home/ubuntu/alibaba-farm/slider_not_found.png")
+        safe_screenshot(page, os.path.join(SCREENSHOT_DIR, "slider_not_found.png"))
         return False
 
     print(f"  [SLIDER] Found '{sel}' in frame {frame.url[:50]}")
@@ -461,7 +464,7 @@ def solve_slider(page, mouse):
     end_x = start_x + drag_dist
 
     print(f"  [SLIDER] Handle at ({start_x:.0f},{start_y:.0f}), drag {drag_dist:.0f}px")
-    safe_screenshot(page, "/home/ubuntu/alibaba-farm/slider_before_drag.png")
+    safe_screenshot(page, os.path.join(SCREENSHOT_DIR, "slider_before_drag.png"))
 
     # Drag! — use Playwright mouse on Windows, xdotool on Linux
     if use_playwright:
@@ -470,7 +473,7 @@ def solve_slider(page, mouse):
         humanly_drag(mouse, start_x, end_x, start_y, duration=1.5)
 
     time.sleep(3)
-    safe_screenshot(page, "/home/ubuntu/alibaba-farm/slider_after_drag.png")
+    safe_screenshot(page, os.path.join(SCREENSHOT_DIR, "slider_after_drag.png"))
 
     # Check if slider is gone or success indicator present
     el2, _, _ = find_slider_handle(page)
@@ -532,7 +535,7 @@ def solve_slider(page, mouse):
 def _login_with_credentials(page, email, password, step_label="7"):
     """Login to Alibaba Cloud with credentials after session lost.
     Returns True if login successful, False otherwise."""
-    safe_screenshot(page, f"/home/ubuntu/alibaba-farm/step{step_label}_login_lost.png")
+    safe_screenshot(page, f"{SCREENSHOT_DIR}/step{step_label}_login_lost.png")
     login_url = "https://account.alibabacloud.com/login.htm"
     print(f"  [{step_label}] Navigating to login page: {login_url}")
     page.goto(login_url, timeout=120000, wait_until="domcontentloaded")
@@ -597,7 +600,7 @@ def _login_with_credentials(page, email, password, step_label="7"):
             return False
     
     print(f"  [{step_label}] Login failed — timeout")
-    safe_screenshot(page, f"/home/ubuntu/alibaba-farm/step{step_label}_login_failed.png")
+    safe_screenshot(page, f"{SCREENSHOT_DIR}/step{step_label}_login_failed.png")
     return False
 
 
@@ -847,7 +850,7 @@ def register_one_attempt(browser):
     # Verify registration completed — check if page changed
     post_url = page.url
     print(f"  [6] Post-register URL: {post_url}")
-    safe_screenshot(page, "/home/ubuntu/alibaba-farm/step6_registered.png")
+    safe_screenshot(page, os.path.join(SCREENSHOT_DIR, "step6_registered.png"))
     
     # Check if still on register page (registration failed)
     if "register" in post_url:
@@ -910,7 +913,7 @@ def register_one_attempt(browser):
                 "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
             }
     
-    safe_screenshot(page, "/home/ubuntu/alibaba-farm/step7_loaded.png")
+    safe_screenshot(page, os.path.join(SCREENSHOT_DIR, "step7_loaded.png"))
     
     # ─ Step 7b: Click Dashboard tab in top nav → switches to console view ─
     print("  [7b] Clicking Dashboard tab (top nav)...")
@@ -937,7 +940,7 @@ def register_one_attempt(browser):
             break
         time.sleep(2)
     time.sleep(5)
-    safe_screenshot(page, "/home/ubuntu/alibaba-farm/step7b_dashboard.png")
+    safe_screenshot(page, os.path.join(SCREENSHOT_DIR, "step7b_dashboard.png"))
     print(f"  [7b] URL after Dashboard: {page.url}")
     
     # ─ Step 7c: Find and click API Key ─
@@ -1093,7 +1096,7 @@ def register_one_attempt(browser):
             api_key_clicked = True
     
     time.sleep(5)
-    safe_screenshot(page, "/home/ubuntu/alibaba-farm/step7c_apikey_page.png")
+    safe_screenshot(page, os.path.join(SCREENSHOT_DIR, "step7c_apikey_page.png"))
     
     # Check if we got redirected to login
     body = page.inner_text("body")[:2000]
@@ -1182,7 +1185,7 @@ def register_one_attempt(browser):
                     print(f"  [8]   BTN: '{txt}'")
             except:
                 pass
-        safe_screenshot(page, "/home/ubuntu/alibaba-farm/step8_no_create.png")
+        safe_screenshot(page, os.path.join(SCREENSHOT_DIR, "step8_no_create.png"))
         page.close()
         return {
             "email": test_email,
@@ -1194,7 +1197,7 @@ def register_one_attempt(browser):
     # ─ Step 8b: Click OK in Create API Key form → then extract key ─
     print("  [8b] Waiting for Create API Key form...")
     time.sleep(5)
-    safe_screenshot(page, "/home/ubuntu/alibaba-farm/step8b_popup.png")
+    safe_screenshot(page, os.path.join(SCREENSHOT_DIR, "step8b_popup.png"))
     
     # Click OK in the Create API Key form (Workspace + Description + Permissions)
     # Bryan: "terus bakal muncul pop up kamu pencet ok. setelah itu api key udah muncul."
@@ -1313,7 +1316,7 @@ def register_one_attempt(browser):
         
         time.sleep(2)
     
-    safe_screenshot(page, "/home/ubuntu/alibaba-farm/step9_final.png")
+    safe_screenshot(page, os.path.join(SCREENSHOT_DIR, "step9_final.png"))
     
     # NOW close the modal (only after extracting key)
     if api_key:

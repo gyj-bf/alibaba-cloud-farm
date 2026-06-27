@@ -3,8 +3,9 @@ import os, json, subprocess, time, threading, sqlite3
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import parse_qs
 
-RESULTS_FILE = "/root/alibaba-cloud-farm/results.json"
-FARM_SCRIPT = "/root/alibaba-cloud-farm/farm.py"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+RESULTS_FILE = os.path.join(BASE_DIR, "results.json")
+FARM_SCRIPT = os.path.join(BASE_DIR, "farm.py")
 NINEROUTER_DB = "/root/.9router/db/data.sqlite"
 BASE_URL = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
 farm_status = {"running": False, "last_output": "", "last_run": "Never", "success": 0, "fail": 0, "slider": 0}
@@ -58,7 +59,7 @@ def run_farm(max_attempts):
         env = os.environ.copy(); env["MAX_ATTEMPTS"] = str(max_attempts)
         proc = subprocess.Popen(["xvfb-run","-a","python3","-u",FARM_SCRIPT],
             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=env,
-            cwd="/root/alibaba-cloud-farm", text=True)
+            cwd=BASE_DIR, text=True)
         output = ""
         for line in proc.stdout:
             output += line; farm_status["last_output"] = output
