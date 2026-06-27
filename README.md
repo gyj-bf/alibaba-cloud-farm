@@ -29,7 +29,7 @@
 ```bash
 git clone https://github.com/YOUR_USERNAME/alibaba-cloud-farm.git
 cd alibaba-cloud-farm
-pip install camoufox[geoip] playwright httpx
+pip install camoufox[geoip]==0.4.11 playwright==1.49.1 httpx
 playwright install firefox
 ```
 
