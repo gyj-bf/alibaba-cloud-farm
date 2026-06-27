@@ -29,9 +29,22 @@
 ```bash
 git clone https://github.com/YOUR_USERNAME/alibaba-cloud-farm.git
 cd alibaba-cloud-farm
-pip install camoufox[geoip]==0.4.11 playwright==1.49.1 httpx
-playwright install firefox
+
+# Option A: Use the setup script (recommended)
+./setup.sh
+
+# Option B: Manual setup
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+PLAYWRIGHT_DOWNLOAD_TIMEOUT=120000 playwright install firefox
+sudo playwright install-deps firefox  # system deps for Firefox
 ```
+
+> **Always activate the venv before running:**
+> ```bash
+> source .venv/bin/activate
+> ```
 
 ### 2. Set Up Email Forwarding (Catch-All)
 
@@ -89,6 +102,7 @@ The farm reads verification emails from your Gmail via IMAP. You need a **Gmail 
 ### 4. Run the Farm
 
 ```bash
+source .venv/bin/activate  # activate venv first
 python farm.py
 ```
 
@@ -117,6 +131,7 @@ HTTP_PROXY=http://user:pass@proxy:port python farm.py
 ### 5. Run the Dashboard
 
 ```bash
+source .venv/bin/activate  # activate venv first
 python dashboard.py --port 8888
 ```
 
