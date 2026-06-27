@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.env
+*.sqlite
+venv/
+.venv/
+*.log
+results.json
