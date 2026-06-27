@@ -1128,7 +1128,6 @@ def register_one_attempt(browser):
                 "timestamp": time.strftime("%Y-%m-%d %H:%M:%S")
             }
     print(f"  [7c] Current URL: {page.url}")
-    print(f"  [7c] Body preview: {body[:300]}")
     
     # ─ Step 8: Create API Key (top-right button, may need scroll right) ─
     print("  [8] Create API Key...")
